@@ -39,9 +39,30 @@ pub struct Terminal {
 }
 
 impl Terminal {
+    /// Read the terminal's size, falling back to its cell grid when the
+    /// platform cannot report the pixel dimensions.
+    ///
+    /// crossterm's `window_size()` is unconditionally unsupported on Windows,
+    /// so Windows assumes a nominal 8x16 cell. The image is still scaled to
+    /// the window; only its exact aspect ratio is approximate.
+    fn query_size() -> Result<terminal::WindowSize> {
+        match terminal::window_size() {
+            Ok(size) => Ok(size),
+            Err(_) => {
+                let (columns, rows) =
+                    terminal::size().context("could not read terminal size")?;
+                Ok(terminal::WindowSize {
+                    columns,
+                    rows,
+                    width: columns.saturating_mul(8),
+                    height: rows.saturating_mul(16),
+                })
+            }
+        }
+    }
+
     pub fn init() -> Result<Self> {
-        let size =
-            terminal::window_size().context("could not read terminal size")?;
+        let size = Self::query_size()?;
 
         terminal::enable_raw_mode().context("could not enable raw mode")?;
 
@@ -85,6 +106,11 @@ impl Terminal {
 
         self.image_width = Some(new_width as u16);
         self.clear_screen().unwrap();
+    }
+
+    /// The terminal's size in columns and rows.
+    pub fn size(&self) -> (u16, u16) {
+        (self.size.columns, self.size.rows)
     }
 
     /// Figure out where to place the image at its current display width.
@@ -156,8 +182,7 @@ impl Terminal {
             match ev {
                 Event::Key(key) => events.push(key),
                 Event::Resize(_, _) => {
-                    self.size = terminal::window_size()
-                        .context("could not read terminal size")?;
+                    self.size = Self::query_size()?;
                     self.image_width = None;
                     self.clear_screen()?;
                 }

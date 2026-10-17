@@ -42,6 +42,7 @@ $(dim)
   $(c6)--no-audio        $(reset)Disable audio completely
   $(c6)--volume <0-100>  $(reset)Master volume, defaults to 100
   $(c6)--validate [PATH] $(reset)Validate levels and exit (all, or one file)
+  $(c6)--edit <PATH>     $(reset)Edit a level file in the terminal
 
 $(dim)
 ========================================================
