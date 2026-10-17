@@ -87,6 +87,11 @@ impl Terminal {
         self.clear_screen().unwrap();
     }
 
+    /// The terminal's size in columns and rows.
+    pub fn size(&self) -> (u16, u16) {
+        (self.size.columns, self.size.rows)
+    }
+
     /// Figure out where to place the image at its current display width.
     pub fn image_placement(
         &self,

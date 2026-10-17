@@ -4,7 +4,7 @@
  * case that will be the kitty terminal protocol.
  */
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use image::{RgbaImage, imageops};
 
 use crate::camera::Camera;
@@ -54,6 +54,19 @@ const SOURCE_PALETTE: Palette = [
     [0x11, 0xd9, 0xc5],
     [0xf2, 0xff, 0x66],
 ];
+
+/// The backgrounds [`level`] can draw, in menu order.
+pub const BACKGROUNDS: &[&str] = &["snow", "nebula", "storm"];
+
+/// The bytes for a background name, or `None` when the game cannot draw it.
+fn background_bytes(name: &str) -> Option<&'static [u8]> {
+    Some(match name {
+        "snow" => BACKGROUND_SNOW,
+        "nebula" => BACKGROUND_NEBULA,
+        "storm" => BACKGROUND_STORM,
+        _ => return None,
+    })
+}
 
 /// Render "title" screen
 pub fn title(frame: &mut RgbaImage) -> Result<()> {
@@ -120,12 +133,8 @@ pub fn level(
     height: u32,
 ) -> Result<RgbaImage> {
     // load the background and get it ready to parallax
-    let background_data = match level.background.as_str() {
-        "snow" => BACKGROUND_SNOW,
-        "nebula" => BACKGROUND_NEBULA,
-        "storm" => BACKGROUND_STORM,
-        name => bail!("unknown background: {name}"),
-    };
+    let background_data = background_bytes(&level.background)
+        .with_context(|| format!("unknown background: {}", level.background))?;
     let background = image::load_from_memory(background_data)
         .with_context(|| {
             format!("could not decode background: {}", level.background)

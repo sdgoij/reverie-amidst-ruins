@@ -28,6 +28,10 @@ pub struct Cli {
     #[arg(long, value_name = "PATH", num_args = 0..=1)]
     pub validate: Option<Option<PathBuf>>,
 
+    /// Edit a level file in the terminal
+    #[arg(long, value_name = "PATH")]
+    pub edit: Option<PathBuf>,
+
     /// FPS to target
     #[arg(long, value_parser = clap::value_parser!(u16).range(1..), default_value_t = 60)]
     pub fps: u16,

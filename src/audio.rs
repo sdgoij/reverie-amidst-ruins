@@ -4,7 +4,7 @@
 
 use std::io::Cursor;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use rodio::{
     Decoder, DeviceSinkBuilder, MixerDeviceSink, Player, Source,
     buffer::SamplesBuffer,
@@ -21,6 +21,21 @@ const COIN: &[u8] = include_bytes!("../assets/sfx/coin.wav");
 const DEAD: &[u8] = include_bytes!("../assets/sfx/dead.wav");
 const MUSIC_VOLUME: f32 = 1.0;
 const SFX_VOLUME: f32 = 0.55;
+
+/// The tracks [`Audio::play_music`] knows, in menu order.
+pub const MUSIC_NAMES: &[&str] =
+    &["reverie-amidst-ruins", "echoes-of-solace", "colors", "the-final-storm"];
+
+/// The bytes for a track name, or `None` when the game cannot play it.
+fn song_bytes(name: &str) -> Option<&'static [u8]> {
+    Some(match name {
+        "reverie-amidst-ruins" => REVERIE,
+        "echoes-of-solace" => ECHOES,
+        "colors" => COLORS,
+        "the-final-storm" => FINAL_STORM,
+        _ => return None,
+    })
+}
 
 pub enum SoundEffect {
     Jump,
@@ -67,13 +82,8 @@ impl Audio {
     }
 
     pub fn play_music(&self, name: &str) -> Result<()> {
-        let bytes = match name {
-            "reverie-amidst-ruins" => REVERIE,
-            "echoes-of-solace" => ECHOES,
-            "colors" => COLORS,
-            "the-final-storm" => FINAL_STORM,
-            _ => bail!("unknown music track: {name}"),
-        };
+        let bytes = song_bytes(name)
+            .with_context(|| format!("unknown music track: {name}"))?;
 
         let source = Decoder::new_looped(Cursor::new(bytes))
             .with_context(|| format!("could not play music: {name}"))?;

@@ -62,6 +62,38 @@ coin can be reached. It runs headless: no terminal, audio, or gamepad is used.
 It prints one line per level and exits non-zero if any of them is not fully
 playable, which is what CI runs on every push.
 
+Editing Levels
+--------------
+
+`--edit <path>` opens a level in a terminal editor. The level is drawn with the
+game's own renderer; the grid, cursor, spawn/goal outlines, reached cells and
+unreachable coins are blended into the frame.
+
+    # edit an existing level (save with s)
+    cargo run --release -- --edit levels/level1.txt
+
+    # a path that does not exist starts a blank level, written by s
+    cargo run --release -- --edit levels/level4.txt
+
+- `1`-`6` - brush: ground, platform, coin, spawn, goal, erase
+- arrows / `h` `j` `k` `l` - move the cursor (Shift jumps 8 cells)
+- `space` / `enter` - paint; `x` - erase
+- `g` - toggle the grid; `v` - re-check now
+- `s` - save; `r` - reload; `q` / `Esc` - quit (a second press confirms if dirty)
+- `m` / `b` - choose music / background from the game's own tables
+- `n` / `z` - new / resize; type the size, `Tab` switches, `Enter` applies
+- `:` - command line (`:music colors`, `:resize 72 17`, `:new 40 14`,
+  `:name Level 4`, `:goto 20 8`, `:check`, `:save`)
+- `?` - key help
+
+Validation runs in the background after a short delay; the HUD says
+`checking`, then `playable` or why not. Structural problems (a missing spawn or
+goal, duplicate markers, an unknown tile, a bad palette or an unknown
+music/background) are reported instantly and their cells outlined in red. New
+levels default to 40x14; sizes are clamped to 16..256 by 8..64, and shrinking
+refuses to cut off the spawn, the goal or a coin. Use `--release` for editing
+too: the check is the same search `--validate` runs.
+
 How Does This Work?
 -------------------
 
@@ -75,6 +107,7 @@ Protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/).
 - [audio.rs](src/audio.rs) - Audio Engine (music and SFX)
 - [camera.rs](src/camera.rs) - Player-following camera
 - [color.rs](src/color.rs) - Helpers to colorize tiles with custom palettes
+- [editor.rs](src/editor.rs) - In-terminal level editor (the `--edit` flag)
 - [input/mod.rs](src/input/mod.rs) - Own and combine the available input methods
   - [input/keyboard.rs](src/input/keyboard.rs) - Handle keyboard input with
       `crossterm`

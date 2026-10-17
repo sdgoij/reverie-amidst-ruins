@@ -19,12 +19,12 @@ use std::collections::HashSet;
 use std::path::Path;
 use std::time::Instant;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
+use crate::DEATH_PLANE;
 use crate::input::Input;
 use crate::level::{LevelDefinition, TILE_SIZE};
-use crate::player::{Player, HITBOX_HEIGHT, HITBOX_WIDTH};
-use crate::DEATH_PLANE;
+use crate::player::{HITBOX_HEIGHT, HITBOX_WIDTH, Player};
 
 /// The fixed step the search simulates: 60 Hz is what the game's physics was
 /// tuned for.
@@ -46,10 +46,14 @@ pub struct Report {
     pub coins: usize,
     /// How many coins the level has.
     pub total_coins: usize,
+    /// Which cells the body occupied.
+    pub reached: Vec<bool>,
     /// How many cells the body occupied.
     pub cells: usize,
     /// How many cells the level has.
     pub total_cells: usize,
+    /// Which of the level's coins the walk collected.
+    pub coin_hit: Vec<bool>,
     /// How many nodes the search explored.
     pub nodes: usize,
     /// Whether the budget ran out before the walk finished.
@@ -277,7 +281,9 @@ fn search(level: &LevelDefinition, budget: usize) -> Report {
         coins: level.coins.len() - coins_left,
         total_coins: level.coins.len(),
         cells: reached.iter().filter(|hit| **hit).count(),
+        reached,
         total_cells: cells,
+        coin_hit,
         nodes: nodes.len(),
         truncated,
     }
@@ -313,7 +319,11 @@ fn simulate(
         input.left = dir < 0;
         input.right = dir > 0;
         input.jump = jumping && frame as i8 <= policy.hold;
-        input.jump_pressed = jumping && frame == 0;
+        // Only a grounded node presses jump: the spawn's drop is the one arc
+        // that starts in the air, and its press would be buffered by the
+        // player and leak into the next program. Jumps are explored from the
+        // landing node instead.
+        input.jump_pressed = jumping && frame == 0 && start.grounded;
         player.update(&input, STEP, &level.blocks, max_x);
         if player.y > death {
             return None;

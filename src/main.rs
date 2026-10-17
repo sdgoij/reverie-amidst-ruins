@@ -18,6 +18,7 @@ mod args;
 mod audio;
 mod camera;
 mod color;
+mod editor;
 mod input;
 mod level;
 mod player;
@@ -77,6 +78,12 @@ fn main() -> Result<()> {
     // gamepad, and it exits without starting the game.
     if let Some(target) = &args.validate {
         return validator::run(target.as_deref(), LEVELS);
+    }
+
+    // The editor is a TUI mode: it owns the terminal and exits without
+    // starting the game.
+    if let Some(path) = &args.edit {
+        return editor::run(path);
     }
 
     let start_level = args.level as usize - 1;

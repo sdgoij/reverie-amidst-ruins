@@ -10,7 +10,7 @@ use crate::color::Palette;
 
 pub const TILE_SIZE: usize = 16;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(unused)]
 pub struct LevelDefinition {
     pub name: String,
@@ -120,7 +120,7 @@ impl LevelDefinition {
     }
 }
 
-fn parse_palette(value: &str) -> Result<Palette> {
+pub(crate) fn parse_palette(value: &str) -> Result<Palette> {
     let colors = value
         .split(',')
         .map(str::trim)
